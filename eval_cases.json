@@ -1,0 +1,26 @@
+[
+  {
+    "case_id": "knowledge-management-ai",
+    "own_product": "ProductRadar",
+    "competitors": ["Notion", "Confluence", "Slite"],
+    "research_question": "比较最近半年 AI 知识管理能力并提出 MVP 机会。",
+    "minimum_evidence": 3,
+    "maximum_unsupported_claims": 0
+  },
+  {
+    "case_id": "competitive-intelligence-workflow",
+    "own_product": "ProductRadar",
+    "competitors": ["Klue", "Crayon", "Kompyte"],
+    "research_question": "比较竞品信息收集、Evidence 和报告输出能力。",
+    "minimum_evidence": 3,
+    "maximum_unsupported_claims": 0
+  },
+  {
+    "case_id": "product-analytics-ai",
+    "own_product": "ProductRadar",
+    "competitors": ["Amplitude", "Mixpanel"],
+    "research_question": "比较 AI 分析能力并寻找产品经理工作流中的缺口。",
+    "minimum_evidence": 2,
+    "maximum_unsupported_claims": 0
+  }
+]

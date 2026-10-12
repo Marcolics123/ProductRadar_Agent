@@ -1,0 +1,128 @@
+services:
+  postgres:
+    image: postgres:16-alpine
+    environment:
+      POSTGRES_DB: productradar
+      POSTGRES_USER: productradar
+      POSTGRES_PASSWORD: ${POSTGRES_PASSWORD:?请在 .env 设置 POSTGRES_PASSWORD}
+    ports:
+      - "127.0.0.1:15432:5432"
+    volumes:
+      - postgres_data:/var/lib/postgresql/data
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U productradar -d productradar"]
+      interval: 5s
+      timeout: 5s
+      retries: 10
+    restart: unless-stopped
+
+  redis:
+    image: redis:7-alpine
+    command: ["redis-server", "--appendonly", "yes"]
+    ports:
+      - "127.0.0.1:6379:6379"
+    volumes:
+      - redis_data:/data
+    healthcheck:
+      test: ["CMD", "redis-cli", "ping"]
+      interval: 5s
+      timeout: 5s
+      retries: 10
+    restart: unless-stopped
+
+  migrate:
+    build: .
+    # 同时初始化业务表和 LangGraph 自己维护的 checkpoint 表。
+    # 🟩【第三批修改：容器初始化】启动时同时迁移业务表并初始化 checkpoint 表。
+    command:
+      [
+        "python",
+        "-c",
+        "from main import run_database_migrations; run_database_migrations()",
+      ]
+    env_file:
+      - .env
+    environment:
+      DATABASE_URL: postgresql+psycopg://productradar:${POSTGRES_PASSWORD:?请在 .env 设置 POSTGRES_PASSWORD}@postgres:5432/productradar
+    depends_on:
+      postgres:
+        condition: service_healthy
+    restart: "no"
+
+  api:
+    build: .
+    env_file:
+      - .env
+    environment:
+      DATABASE_URL: postgresql+psycopg://productradar:${POSTGRES_PASSWORD:?请在 .env 设置 POSTGRES_PASSWORD}@postgres:5432/productradar
+      CELERY_BROKER_URL: redis://redis:6379/0
+      # Local browser uses HTTP (http://localhost:8000); Secure cookies would block login.
+      # Public deployments MUST add docker-compose.public.yml to force true on HTTPS.
+      PRODUCTRADAR_COOKIE_SECURE: "false"
+    ports:
+      - "127.0.0.1:8000:8000"
+    depends_on:
+      migrate:
+        condition: service_completed_successfully
+      redis:
+        condition: service_healthy
+    healthcheck:
+      test:
+        [
+          "CMD",
+          "python",
+          "-c",
+          "import urllib.request; urllib.request.urlopen('http://localhost:8000/health/ready', timeout=3)",
+        ]
+      interval: 10s
+      timeout: 5s
+      retries: 5
+    restart: unless-stopped
+
+  # 🟦【第四批新增：公网 HTTPS】使用 --profile public 才启动，不影响本地 PyCharm 调试。
+  proxy:
+    image: caddy:2-alpine
+    profiles: ["public"]
+    environment:
+      PRODUCTRADAR_DOMAIN: ${PRODUCTRADAR_DOMAIN:-localhost}
+    ports:
+      - "80:80"
+      - "443:443"
+      - "443:443/udp"
+    volumes:
+      - ./Caddyfile:/etc/caddy/Caddyfile:ro
+      - caddy_data:/data
+      - caddy_config:/config
+    depends_on:
+      api:
+        condition: service_healthy
+    restart: unless-stopped
+
+  worker:
+    build: .
+    command:
+      [
+        "celery",
+        "-A",
+        "worker.celery_app",
+        "worker",
+        "--loglevel=INFO",
+        "--concurrency=2",
+      ]
+    env_file:
+      - .env
+    environment:
+      DATABASE_URL: postgresql+psycopg://productradar:${POSTGRES_PASSWORD:?请在 .env 设置 POSTGRES_PASSWORD}@postgres:5432/productradar
+      CELERY_BROKER_URL: redis://redis:6379/0
+    depends_on:
+      migrate:
+        condition: service_completed_successfully
+      redis:
+        condition: service_healthy
+    restart: unless-stopped
+
+volumes:
+  postgres_data:
+  redis_data:
+  caddy_data:
+  caddy_config:

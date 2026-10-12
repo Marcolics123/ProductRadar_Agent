@@ -1,0 +1,29 @@
+# Credentials and local databases
+.env
+.env.*
+!.env.example
+*.db
+*.db-*
+*.sqlite
+*.sqlite3
+
+# Python/editor/build artifacts
+.venv/
+venv/
+.idea/
+.vscode/
+__pycache__/
+*.py[cod]
+.pytest_cache/
+.mypy_cache/
+.ruff_cache/
+.coverage
+htmlcov/
+*.egg-info/
+build/
+dist/
+
+# Machine-specific / temporary files
+.DS_Store
+Thumbs.db
+*.log

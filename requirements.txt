@@ -1,0 +1,16 @@
+alembic==1.20.0
+# 🟦【第四批新增：账号安全】使用 Argon2 保存密码哈希，不保存明文密码。
+argon2-cffi==25.1.0
+beautifulsoup4==4.15.0
+celery[redis]==5.6.3
+fastapi==0.141.1
+httpx==0.28.1
+# 🟩【第三批新增：依赖】持久化工作流与 PostgreSQL checkpoint。
+langgraph==1.2.11
+langgraph-checkpoint-postgres==3.1.2
+# 🟦【第四批修改：可重现构建】固定直接依赖，避免下次部署自动升级后行为改变。
+psycopg[binary]==3.3.6
+python-dotenv==1.2.3
+redis==6.4.0
+SQLAlchemy==2.0.54
+uvicorn==0.53.0

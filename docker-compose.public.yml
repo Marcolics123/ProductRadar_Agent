@@ -1,0 +1,8 @@
+# Add this override ONLY for public HTTPS deployments:
+# docker compose -f docker-compose.yml -f docker-compose.public.yml --profile public up -d --build
+services:
+  api:
+    environment:
+      # The default compose stack intentionally uses non-Secure cookies for localhost HTTP.
+      # Force Secure cookies for HTTPS; do not expose default local stack publicly.
+      PRODUCTRADAR_COOKIE_SECURE: "true"
